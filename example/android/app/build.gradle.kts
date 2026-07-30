@@ -19,7 +19,8 @@ android {
         applicationId = "com.rtlsdrmobile.widget_rtlsdr_example"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // driver_rtlsdr requires minSdk 26 (Oboe/AAudio low-latency audio path).
+        minSdk = maxOf(flutter.minSdkVersion, 26)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
