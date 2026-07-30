@@ -1,0 +1,32 @@
+name: widget_rtlsdr_example
+description: "Demonstrates the widget_rtlsdr immersive UI and settings navigation."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Hosted (not a path dependency), same as the package itself — see
+  # ../pubspec.yaml — so this example builds the same way a real consumer's
+  # app would.
+  core_rtlsdr: ^0.0.2
+
+  widget_rtlsdr:
+    # The example app is bundled with the package, so it always exercises
+    # the current version — see ../pubspec.yaml for how the package itself
+    # depends on core_rtlsdr.
+    path: ../
+
+  provider: ^6.1.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

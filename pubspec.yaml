@@ -1,0 +1,32 @@
+name: widget_rtlsdr
+description: >
+  Immersive, gqrx-inspired widget library for RTL-SDR on Flutter: waterfall,
+  spectrum scope, S-meter and digit-tuner display widgets, plus adaptive
+  panels and a distributable settings navigation (master-detail on large
+  screens, drill-down subscreens on phones) — all built on top of the
+  core_rtlsdr ChangeNotifier controllers.
+version: 0.0.1
+repository: https://github.com/reinanbr/widget_rtsdr_flutter
+issue_tracker: https://github.com/reinanbr/widget_rtsdr_flutter/issues
+topics:
+  - android
+  - radio
+  - sdr
+  - widgets
+  - ui
+
+environment:
+  sdk: ^3.12.2
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  core_rtlsdr: ^0.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

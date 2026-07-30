@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NDK_VERSION: "28.2.13676358"
+  CMAKE_VERSION: "3.22.1"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 - static analysis + pure Dart/Flutter widget tests (host).
+  # widget_rtlsdr itself has no native/Android code — it only depends on
+  # core_rtlsdr's ChangeNotifier controllers — so this needs no NDK at all.
+  # ---------------------------------------------------------------------------
+  analyze-and-unit:
+    name: analyze + unit (host)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install package dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze package
+        run: flutter analyze --fatal-infos
+
+      - name: Run package widget/unit tests
+        run: flutter test
+
+      - name: Install example app dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Analyze example app
+        working-directory: example
+        run: flutter analyze --fatal-infos
+
+      - name: Run example app widget tests
+        working-directory: example
+        run: flutter test
+
+  # ---------------------------------------------------------------------------
+  # Job 2 - debug APK build. The example app pulls in driver_rtlsdr's native
+  # code transitively through core_rtlsdr, so building an actual APK (unlike
+  # analyze/test above) needs the NDK/CMake — this is the real confirmation
+  # that widget_rtlsdr's widgets build for Android end to end, same rationale
+  # as core_rtlsdr's own CI.
+  # ---------------------------------------------------------------------------
+  build-example-apk:
+    name: build example APK (debug)
+    needs: analyze-and-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Android NDK & CMake
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" > /dev/null
+
+      - name: Install example app dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build debug APK
+        working-directory: example
+        run: flutter build apk --debug
