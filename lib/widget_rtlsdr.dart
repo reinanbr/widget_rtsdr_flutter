@@ -12,7 +12,8 @@
 ///   spectrogram), [SpectrumTuner] (gqrx/CubicSDR-style combined scope +
 ///   waterfall — one shared tune gesture, drag the passband edges to
 ///   resize filter width, pinch to zoom span), [SignalMeter] (dBFS bar
-///   with a squelch tick).
+///   with a squelch tick), [PowerReadout] (compact numeric dBFS label,
+///   meant to sit beside [FrequencyReadout]).
 /// - Control panels, one per `core_rtlsdr` controller: [GainPanel],
 ///   [SquelchPanel], [StereoRdsPanel], [RecordingPanel], [ScanPanel],
 ///   [PresetsPanel], [StatsPanel], [UsbStatusBanner]. Each is a
@@ -56,6 +57,7 @@ export 'src/theme/rtlsdr_theme.dart';
 export 'src/theme/rtlsdr_theme_data.dart';
 export 'src/widgets/frequency_readout.dart';
 export 'src/widgets/mode_selector.dart';
+export 'src/widgets/power_readout.dart';
 export 'src/widgets/rtlsdr_panel.dart';
 export 'src/widgets/signal_meter.dart';
 export 'src/widgets/spectrum_scope.dart';

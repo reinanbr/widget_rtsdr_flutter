@@ -1,3 +1,21 @@
+## 0.4.0
+
+- Added `PowerReadout`: a compact numeric dBFS label (`-42.3 dBFS`) meant to
+  sit right beside `FrequencyReadout` — `RtlSdrImmersiveScreen` now shows
+  one next to the digit tuner, bound to `radio.rfLevelDbfs`, so the tuned
+  frequency and how strong it's coming in read together at a glance (the
+  same pairing gqrx shows above its spectrum view). Also exported
+  standalone for host apps building their own layout.
+- Confirmed (no code change needed): `SpectrumTuner`'s gesture model already
+  matches gqrx/CubicSDR exactly — tap or single-finger drag anywhere
+  retunes, dragging a passband edge resizes the demod filter, and only a
+  two-finger pinch changes the visible span. A single finger never zooms;
+  see `test/spectrum_tuner_test.dart`.
+- Confirmed (no code change needed): automatic gain control
+  (`GainPanel`/`RadioController.gainAuto`/`setGainAuto`) and saved-station
+  presets (`PresetsPanel`/`PresetsController`) already ship in this
+  package and are wired into the example app's settings sections.
+
 ## 0.3.0
 
 - Added `RtlSdrFrequencyRange`: the R820T/R820T2 tuner's supported tuning

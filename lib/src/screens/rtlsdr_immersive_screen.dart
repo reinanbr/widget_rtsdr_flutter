@@ -7,6 +7,7 @@ import '../rtlsdr_frequency_range.dart';
 import '../theme/rtlsdr_theme.dart';
 import '../widgets/frequency_readout.dart';
 import '../widgets/mode_selector.dart';
+import '../widgets/power_readout.dart';
 import '../widgets/signal_meter.dart';
 import '../widgets/spectrum_tuner.dart';
 import 'rtlsdr_settings_screen.dart';
@@ -183,6 +184,8 @@ class _ScopeState extends State<_Scope> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 12),
+                PowerReadout(valueDb: radio.rfLevelDbfs),
                 const SizedBox(width: 12),
                 _StreamButton(radio: radio),
                 if (widget.showSettingsButton) ...[
