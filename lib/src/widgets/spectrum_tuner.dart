@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../demod_bandwidth.dart';
 import '../painters/spectrum_painter.dart';
+import '../rtlsdr_frequency_range.dart';
 import '../spectrum_geometry.dart';
 import '../theme/rtlsdr_theme.dart';
 import 'frequency_readout.dart';
@@ -26,6 +27,12 @@ enum _DragTarget { tune, leftEdge, rightEdge }
 /// - Pinch with two fingers to zoom the visible span ([onSpanChanged]),
 ///   clamped to [minSpanHz]/[maxSpanHz].
 ///
+/// Tap/drag-to-tune is clamped to [minFrequencyHz]/[maxFrequencyHz],
+/// defaulting to [RtlSdrFrequencyRange]'s R820T/R820T2 bounds, so this
+/// widget can never report a frequency the tuner can't lock to even when
+/// the visible span (center ± half the span) extends past the edge of the
+/// supported range.
+///
 /// Fully controlled, like [SpectrumScope]/[FrequencyReadout] — owns no
 /// frequency/span/passband state itself, only the transient "which gesture
 /// is this" bookkeeping for the pointer sequence currently in progress.
@@ -41,6 +48,8 @@ class SpectrumTuner extends StatefulWidget {
     this.minSpanHz = 20000,
     this.maxSpanHz,
     this.minPassbandHz = 500,
+    this.minFrequencyHz = RtlSdrFrequencyRange.minHz,
+    this.maxFrequencyHz = RtlSdrFrequencyRange.maxHz,
     this.waterfallHistoryRows = 120,
     this.scopeFlex = 4,
     this.waterfallFlex = 5,
@@ -73,6 +82,12 @@ class SpectrumTuner extends StatefulWidget {
 
   /// Edge-drag clamp — the passband can't be resized narrower than this.
   final int minPassbandHz;
+
+  /// Tap/drag-to-tune clamp — [onFrequencyChanged] never reports below this.
+  final int minFrequencyHz;
+
+  /// Tap/drag-to-tune clamp — [onFrequencyChanged] never reports above this.
+  final int maxFrequencyHz;
 
   final int waterfallHistoryRows;
 
@@ -185,12 +200,13 @@ class _SpectrumTunerState extends State<SpectrumTuner> {
   void _tuneAt(double dx, double width) {
     final onFrequencyChanged = widget.onFrequencyChanged;
     if (onFrequencyChanged == null) return;
+    final frequencyHz = frequencyAtFraction(
+      centerFrequencyHz: widget.centerFrequencyHz,
+      spanHz: widget.spanHz,
+      fraction: dx / width,
+    );
     onFrequencyChanged(
-      frequencyAtFraction(
-        centerFrequencyHz: widget.centerFrequencyHz,
-        spanHz: widget.spanHz,
-        fraction: dx / width,
-      ),
+      frequencyHz.clamp(widget.minFrequencyHz, widget.maxFrequencyHz),
     );
   }
 

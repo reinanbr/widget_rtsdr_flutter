@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../rtlsdr_frequency_range.dart';
 import '../theme/rtlsdr_theme.dart';
 import '../theme/rtlsdr_theme_data.dart';
 
@@ -15,14 +16,19 @@ import '../theme/rtlsdr_theme_data.dart';
 /// 1 Hz resolution up to 9.999.999.999 Hz, comfortably above any RTL-SDR
 /// tuner range); digits with no significant value yet (leading zeros) are
 /// dimmed, exactly like gqrx.
+///
+/// [minHz]/[maxHz] default to [RtlSdrFrequencyRange]'s R820T/R820T2 bounds,
+/// so dragging/scrolling/stepping a digit can never ask the tuner for a
+/// frequency it can't lock to — pass a different tuner's range (or `null`
+/// to disable clamping) if the host app targets different hardware.
 class FrequencyReadout extends StatefulWidget {
   const FrequencyReadout({
     super.key,
     required this.frequencyHz,
     required this.onChanged,
     this.digitCount = 10,
-    this.minHz = 0,
-    this.maxHz,
+    this.minHz = RtlSdrFrequencyRange.minHz,
+    this.maxHz = RtlSdrFrequencyRange.maxHz,
     this.fontSize = 36,
   });
 

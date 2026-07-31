@@ -1,3 +1,20 @@
+## 0.3.0
+
+- Added `RtlSdrFrequencyRange`: the R820T/R820T2 tuner's supported tuning
+  range (24 MHz – 1766 MHz), the chip virtually every modern RTL-SDR dongle
+  ships with. Neither `driver_rtlsdr` nor `core_rtlsdr` enforce a hardware
+  frequency range themselves, so `FrequencyReadout`, `SpectrumTuner` and
+  `SpectrumScope` now clamp to these bounds by default — dragging/
+  scrolling/stepping the digit tuner or tapping/dragging the scope can no
+  longer ask the tuner to lock to a frequency it doesn't support. Every
+  widget accepts its own `minHz`/`maxHz` (or `minFrequencyHz`/
+  `maxFrequencyHz`) to override this for a different tuner chip.
+  `RtlSdrImmersiveScreen` gained matching `minFrequencyHz`/`maxFrequencyHz`
+  constructor parameters, threaded through to both.
+- Example app: added an "About" settings section identifying the app as
+  the official `widget_rtlsdr` demo, crediting the developer and the
+  reason it was built.
+
 ## 0.2.0
 
 - `FrequencyReadout`: each digit now has a small up/down arrow button

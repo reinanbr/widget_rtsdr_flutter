@@ -12,6 +12,8 @@ Widget _harness({
   int spanHz = 1000000,
   int? passbandHz,
   int? maxSpanHz,
+  int minFrequencyHz = RtlSdrFrequencyRange.minHz,
+  int maxFrequencyHz = RtlSdrFrequencyRange.maxHz,
   ValueChanged<int>? onFrequencyChanged,
   ValueChanged<int>? onPassbandChanged,
   ValueChanged<int>? onSpanChanged,
@@ -27,6 +29,8 @@ Widget _harness({
           spanHz: spanHz,
           passbandHz: passbandHz,
           maxSpanHz: maxSpanHz,
+          minFrequencyHz: minFrequencyHz,
+          maxFrequencyHz: maxFrequencyHz,
           onFrequencyChanged: onFrequencyChanged,
           onPassbandChanged: onPassbandChanged,
           onSpanChanged: onSpanChanged,
@@ -172,6 +176,48 @@ void main() {
     // clamped to maxSpanHz (4MHz).
     expect(span, 4000000);
   });
+
+  testWidgets(
+    'tap-to-tune is clamped to minFrequencyHz near the low band edge',
+    (tester) async {
+      int? tuned;
+      // Center 30 MHz, 20 MHz span -> left edge would be 20 MHz, below the
+      // default 24 MHz R820T/R820T2 floor.
+      await tester.pumpWidget(
+        _harness(
+          centerFrequencyHz: 30000000,
+          spanHz: 20000000,
+          onFrequencyChanged: (f) => tuned = f,
+        ),
+      );
+
+      await tester.tapAt(const Offset(0, 100)); // fraction 0.0 -> 20 MHz raw
+      await tester.pump();
+
+      expect(tuned, RtlSdrFrequencyRange.minHz);
+    },
+  );
+
+  testWidgets(
+    'tap-to-tune is clamped to maxFrequencyHz near the high band edge',
+    (tester) async {
+      int? tuned;
+      // Center 1760 MHz, 20 MHz span -> right edge would be 1770 MHz, above
+      // the default 1766 MHz R820T/R820T2 ceiling.
+      await tester.pumpWidget(
+        _harness(
+          centerFrequencyHz: 1760000000,
+          spanHz: 20000000,
+          onFrequencyChanged: (f) => tuned = f,
+        ),
+      );
+
+      await tester.tapAt(const Offset(299, 100)); // fraction ~1.0 -> ~1770 MHz
+      await tester.pump();
+
+      expect(tuned, RtlSdrFrequencyRange.maxHz);
+    },
+  );
 
   testWidgets('lifting one finger during a pinch resumes single-finger tune', (
     tester,

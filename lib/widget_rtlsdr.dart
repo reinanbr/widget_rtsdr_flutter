@@ -40,6 +40,7 @@ library;
 
 export 'src/demod_bandwidth.dart';
 export 'src/navigation/rtlsdr_settings_section.dart';
+export 'src/rtlsdr_frequency_range.dart';
 export 'src/panels/gain_panel.dart';
 export 'src/panels/presets_panel.dart';
 export 'src/panels/recording_panel.dart';

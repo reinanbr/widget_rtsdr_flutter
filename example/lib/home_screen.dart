@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:widget_rtlsdr/widget_rtlsdr.dart';
 
+import 'about_panel.dart';
+
 /// USB permission flow ([UsbStatusBanner]) until the dongle reaches
 /// `deviceReady`, then [RtlSdrImmersiveScreen] wired to every `core_rtlsdr`
 /// controller through [RtlSdrSettingsSection]s — resize this on a tablet
@@ -124,6 +126,12 @@ class _HomeScreenState extends State<HomeScreen> {
         title: 'Statistics',
         icon: Icons.bar_chart,
         builder: (context) => StatsPanel(radio: radio),
+      ),
+      RtlSdrSettingsSection(
+        id: 'about',
+        title: 'About',
+        icon: Icons.info_outline,
+        builder: (context) => const AboutPanel(),
       ),
     ];
   }

@@ -2,6 +2,7 @@ import 'package:core_rtlsdr/core_rtlsdr.dart';
 import 'package:flutter/material.dart';
 
 import '../painters/spectrum_painter.dart';
+import '../rtlsdr_frequency_range.dart';
 import '../spectrum_geometry.dart';
 import '../theme/rtlsdr_theme.dart';
 
@@ -11,10 +12,12 @@ import '../theme/rtlsdr_theme.dart';
 ///
 /// Drag horizontally to retune: [onFrequencyChanged] receives the
 /// frequency under the pointer, computed from [centerFrequencyHz] and
-/// [spanHz] (pass `radio.frequencyHz` and `radio.sampleRateHz`). Pass
-/// [passbandHz] (see [defaultPassbandHzFor]) to shade the current demod
-/// filter's passband around the tuned frequency, the same cue gqrx/
-/// CubicSDR both show.
+/// [spanHz] (pass `radio.frequencyHz` and `radio.sampleRateHz`), clamped to
+/// [minFrequencyHz]/[maxFrequencyHz] (defaulting to [RtlSdrFrequencyRange]'s
+/// R820T/R820T2 bounds) so this never reports a frequency the tuner can't
+/// lock to. Pass [passbandHz] (see [defaultPassbandHzFor]) to shade the
+/// current demod filter's passband around the tuned frequency, the same
+/// cue gqrx/CubicSDR both show.
 class SpectrumScope extends StatelessWidget {
   const SpectrumScope({
     super.key,
@@ -24,6 +27,8 @@ class SpectrumScope extends StatelessWidget {
     this.passbandHz,
     this.minDb = -100,
     this.maxDb = -10,
+    this.minFrequencyHz = RtlSdrFrequencyRange.minHz,
+    this.maxFrequencyHz = RtlSdrFrequencyRange.maxHz,
     this.showCursor = true,
     this.showGridLabels = true,
     this.showFrequencyAxis = true,
@@ -36,16 +41,25 @@ class SpectrumScope extends StatelessWidget {
   final int? passbandHz;
   final double minDb;
   final double maxDb;
+
+  /// Drag-to-tune clamp — [onFrequencyChanged] never reports below this.
+  final int minFrequencyHz;
+
+  /// Drag-to-tune clamp — [onFrequencyChanged] never reports above this.
+  final int maxFrequencyHz;
   final bool showCursor;
   final bool showGridLabels;
   final bool showFrequencyAxis;
   final ValueChanged<int>? onFrequencyChanged;
 
-  int _frequencyAt(double dx, double width) => frequencyAtFraction(
-    centerFrequencyHz: centerFrequencyHz,
-    spanHz: spanHz,
-    fraction: dx / width,
-  );
+  int _frequencyAt(double dx, double width) {
+    final frequencyHz = frequencyAtFraction(
+      centerFrequencyHz: centerFrequencyHz,
+      spanHz: spanHz,
+      fraction: dx / width,
+    );
+    return frequencyHz.clamp(minFrequencyHz, maxFrequencyHz);
+  }
 
   @override
   Widget build(BuildContext context) {

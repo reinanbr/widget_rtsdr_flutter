@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../demod_bandwidth.dart';
 import '../navigation/rtlsdr_settings_section.dart';
+import '../rtlsdr_frequency_range.dart';
 import '../theme/rtlsdr_theme.dart';
 import '../widgets/frequency_readout.dart';
 import '../widgets/mode_selector.dart';
@@ -30,6 +31,8 @@ class RtlSdrImmersiveScreen extends StatelessWidget {
     this.maxDb = -10,
     this.sideSettingsBreakpoint = 1100,
     this.tuneStepHz = 1000,
+    this.minFrequencyHz = RtlSdrFrequencyRange.minHz,
+    this.maxFrequencyHz = RtlSdrFrequencyRange.maxHz,
   });
 
   final RadioController radio;
@@ -51,6 +54,14 @@ class RtlSdrImmersiveScreen extends StatelessWidget {
 
   /// Frequency step (Hz) applied by the tap-to-tune gesture on the scope.
   final int tuneStepHz;
+
+  /// Lowest frequency (Hz) the digit tuner and tap/drag-to-tune gesture can
+  /// reach — defaults to [RtlSdrFrequencyRange]'s R820T/R820T2 bounds.
+  final int minFrequencyHz;
+
+  /// Highest frequency (Hz) the digit tuner and tap/drag-to-tune gesture
+  /// can reach — defaults to [RtlSdrFrequencyRange]'s R820T/R820T2 bounds.
+  final int maxFrequencyHz;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +88,8 @@ class RtlSdrImmersiveScreen extends StatelessWidget {
                       settingsSections: settingsSections,
                       settingsTitle: settingsTitle,
                       tuneStepHz: tuneStepHz,
+                      minFrequencyHz: minFrequencyHz,
+                      maxFrequencyHz: maxFrequencyHz,
                     ),
                   ),
                 ),
@@ -107,6 +120,8 @@ class _Scope extends StatefulWidget {
     required this.settingsSections,
     required this.settingsTitle,
     required this.tuneStepHz,
+    required this.minFrequencyHz,
+    required this.maxFrequencyHz,
   });
 
   final RadioController radio;
@@ -116,6 +131,8 @@ class _Scope extends StatefulWidget {
   final List<RtlSdrSettingsSection> settingsSections;
   final String settingsTitle;
   final int tuneStepHz;
+  final int minFrequencyHz;
+  final int maxFrequencyHz;
 
   @override
   State<_Scope> createState() => _ScopeState();
@@ -160,6 +177,8 @@ class _ScopeState extends State<_Scope> {
                     alignment: Alignment.centerLeft,
                     child: FrequencyReadout(
                       frequencyHz: radio.frequencyHz,
+                      minHz: widget.minFrequencyHz,
+                      maxHz: widget.maxFrequencyHz,
                       onChanged: radio.setFrequencyHz,
                     ),
                   ),
@@ -195,12 +214,16 @@ class _ScopeState extends State<_Scope> {
                 minDb: widget.minDb,
                 maxDb: widget.maxDb,
                 maxSpanHz: radio.sampleRateHz,
+                minFrequencyHz: widget.minFrequencyHz,
+                maxFrequencyHz: widget.maxFrequencyHz,
                 onFrequencyChanged: (frequencyHz) {
                   final step = widget.tuneStepHz;
                   final rounded = step > 0
                       ? (frequencyHz / step).round() * step
                       : frequencyHz;
-                  radio.setFrequencyHz(rounded);
+                  radio.setFrequencyHz(
+                    rounded.clamp(widget.minFrequencyHz, widget.maxFrequencyHz),
+                  );
                 },
                 onPassbandChanged: (passbandHz) =>
                     setState(() => _passbandHz = passbandHz),

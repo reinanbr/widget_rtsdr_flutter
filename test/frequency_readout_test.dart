@@ -120,4 +120,25 @@ void main() {
 
     expect(changed, 24000000);
   });
+
+  testWidgets(
+    'defaults to the R820T/R820T2 tuning range with no minHz/maxHz set',
+    (tester) async {
+      int? changed;
+      await tester.pumpWidget(
+        wrap(
+          FrequencyReadout(
+            frequencyHz: RtlSdrFrequencyRange.minHz,
+            onChanged: (hz) => changed = hz,
+          ),
+        ),
+      );
+
+      final firstDigit = find.text('0').first;
+      await tester.drag(firstDigit, const Offset(0, 400));
+      await tester.pumpAndSettle();
+
+      expect(changed, RtlSdrFrequencyRange.minHz);
+    },
+  );
 }
