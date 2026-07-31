@@ -5,10 +5,11 @@ import '../theme/rtlsdr_theme.dart';
 import '../theme/rtlsdr_theme_data.dart';
 
 /// Big odometer-style frequency display, gqrx's signature tuning control:
-/// each digit is its own place value — drag a digit up/down (or scroll
-/// over it with a mouse) to change just that place, with carries cascading
-/// into its neighbors automatically since it's all done by adding/
-/// subtracting from the underlying [frequencyHz] and re-rendering.
+/// each digit is its own place value — drag a digit up/down, scroll over it
+/// with a mouse, or tap the small up/down arrow above/below it, to change
+/// just that place, with carries cascading into its neighbors automatically
+/// since it's all done by adding/subtracting from the underlying
+/// [frequencyHz] and re-rendering.
 ///
 /// [digitCount] fixes how many decimal digits are shown (10 by default —
 /// 1 Hz resolution up to 9.999.999.999 Hz, comfortably above any RTL-SDR
@@ -110,6 +111,8 @@ class _FrequencyReadoutState extends State<FrequencyReadout> {
             }
           },
           onScroll: (steps) => _adjust(i, steps),
+          onStepUp: () => _adjust(i, 1),
+          onStepDown: () => _adjust(i, -1),
         ),
       );
     }
@@ -137,6 +140,8 @@ class _DigitCell extends StatelessWidget {
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onScroll,
+    required this.onStepUp,
+    required this.onStepDown,
   });
 
   final String digit;
@@ -148,44 +153,96 @@ class _DigitCell extends StatelessWidget {
   final VoidCallback onDragStart;
   final ValueChanged<double> onDragUpdate;
   final ValueChanged<int> onScroll;
+  final VoidCallback onStepUp;
+  final VoidCallback onStepDown;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.resizeUpDown,
-      onEnter: (_) => onHover(true),
-      onExit: (_) => onHover(false),
-      child: Listener(
-        onPointerSignal: (event) {
-          if (event is PointerScrollEvent) {
-            onScroll(event.scrollDelta.dy < 0 ? 1 : -1);
-          }
-        },
-        child: GestureDetector(
-          onVerticalDragStart: (_) => onDragStart(),
-          onVerticalDragUpdate: (details) => onDragUpdate(details.delta.dy),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: hovered
-                  ? theme.digitActiveBackground
-                  : theme.digitBackground,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              digit,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.w600,
-                fontFeatures: const [FontFeature.tabularFigures()],
-                color: dim
-                    ? theme.textSecondary.withValues(alpha: 0.35)
-                    : theme.digitText,
-                height: 1.1,
+    final arrowSize = fontSize * 0.5;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _StepButton(
+          icon: Icons.keyboard_arrow_up,
+          size: arrowSize,
+          theme: theme,
+          onPressed: onStepUp,
+        ),
+        MouseRegion(
+          cursor: SystemMouseCursors.resizeUpDown,
+          onEnter: (_) => onHover(true),
+          onExit: (_) => onHover(false),
+          child: Listener(
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                onScroll(event.scrollDelta.dy < 0 ? 1 : -1);
+              }
+            },
+            child: GestureDetector(
+              onVerticalDragStart: (_) => onDragStart(),
+              onVerticalDragUpdate: (details) => onDragUpdate(details.delta.dy),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: hovered
+                      ? theme.digitActiveBackground
+                      : theme.digitBackground,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  digit,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: dim
+                        ? theme.textSecondary.withValues(alpha: 0.35)
+                        : theme.digitText,
+                    height: 1.1,
+                  ),
+                ),
               ),
             ),
           ),
+        ),
+        _StepButton(
+          icon: Icons.keyboard_arrow_down,
+          size: arrowSize,
+          theme: theme,
+          onPressed: onStepDown,
+        ),
+      ],
+    );
+  }
+}
+
+/// Small tap target above/below each [_DigitCell] to increment/decrement
+/// that digit's place value by one step — an explicit alternative to the
+/// drag/scroll gesture, easier to hit precisely on a touchscreen.
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.size,
+    required this.theme,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final double size;
+  final RtlSdrThemeData theme;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 1),
+          child: Icon(icon, size: size, color: theme.textSecondary),
         ),
       ),
     );

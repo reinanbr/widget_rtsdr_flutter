@@ -7,8 +7,7 @@ import '../theme/rtlsdr_theme.dart';
 import '../widgets/frequency_readout.dart';
 import '../widgets/mode_selector.dart';
 import '../widgets/signal_meter.dart';
-import '../widgets/spectrum_scope.dart';
-import '../widgets/waterfall_view.dart';
+import '../widgets/spectrum_tuner.dart';
 import 'rtlsdr_settings_screen.dart';
 
 /// The full gqrx-style instrument screen: signal meter, big digit-tuner,
@@ -77,6 +76,7 @@ class RtlSdrImmersiveScreen extends StatelessWidget {
                           settingsSections.isNotEmpty && !showSidePanel,
                       settingsSections: settingsSections,
                       settingsTitle: settingsTitle,
+                      tuneStepHz: tuneStepHz,
                     ),
                   ),
                 ),
@@ -98,7 +98,7 @@ class RtlSdrImmersiveScreen extends StatelessWidget {
   }
 }
 
-class _Scope extends StatelessWidget {
+class _Scope extends StatefulWidget {
   const _Scope({
     required this.radio,
     required this.minDb,
@@ -106,6 +106,7 @@ class _Scope extends StatelessWidget {
     required this.showSettingsButton,
     required this.settingsSections,
     required this.settingsTitle,
+    required this.tuneStepHz,
   });
 
   final RadioController radio;
@@ -114,20 +115,38 @@ class _Scope extends StatelessWidget {
   final bool showSettingsButton;
   final List<RtlSdrSettingsSection> settingsSections;
   final String settingsTitle;
+  final int tuneStepHz;
+
+  @override
+  State<_Scope> createState() => _ScopeState();
+}
+
+class _ScopeState extends State<_Scope> {
+  DemodMode? _lastMode;
+  int? _passbandHz;
+  int? _spanHz;
 
   @override
   Widget build(BuildContext context) {
     final theme = RtlSdrTheme.of(context);
     return ListenableBuilder(
-      listenable: radio,
+      listenable: widget.radio,
       builder: (context, _) {
+        final radio = widget.radio;
+        if (_lastMode != radio.demodMode) {
+          _lastMode = radio.demodMode;
+          _passbandHz = defaultPassbandHzFor(radio.demodMode);
+          _spanHz = radio.sampleRateHz;
+        }
+        _spanHz ??= radio.sampleRateHz;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SignalMeter(
               valueDb: radio.rfLevelDbfs,
-              minDb: minDb,
-              maxDb: maxDb,
+              minDb: widget.minDb,
+              maxDb: widget.maxDb,
               squelchDb: radio.demodMode.supportsSquelch
                   ? radio.squelchThresholdDb
                   : null,
@@ -147,16 +166,16 @@ class _Scope extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 _StreamButton(radio: radio),
-                if (showSettingsButton) ...[
+                if (widget.showSettingsButton) ...[
                   const SizedBox(width: 8),
                   IconButton(
                     icon: Icon(Icons.settings, color: theme.textSecondary),
-                    tooltip: settingsTitle,
+                    tooltip: widget.settingsTitle,
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => RtlSdrSettingsScreen(
-                          sections: settingsSections,
-                          title: settingsTitle,
+                          sections: widget.settingsSections,
+                          title: widget.settingsTitle,
                         ),
                       ),
                     ),
@@ -168,25 +187,24 @@ class _Scope extends StatelessWidget {
             ModeSelector(radio: radio),
             const SizedBox(height: 12),
             Expanded(
-              flex: 4,
-              child: SpectrumScope(
+              child: SpectrumTuner(
                 spectrum: radio.spectrumController,
                 centerFrequencyHz: radio.frequencyHz,
-                spanHz: radio.sampleRateHz,
-                passbandHz: defaultPassbandHzFor(radio.demodMode),
-                minDb: minDb,
-                maxDb: maxDb,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              flex: 5,
-              child: WaterfallView(
-                spectrum: radio.spectrumController,
-                spanHz: radio.sampleRateHz,
-                passbandHz: defaultPassbandHzFor(radio.demodMode),
-                minDb: minDb,
-                maxDb: maxDb,
+                spanHz: _spanHz!,
+                passbandHz: _passbandHz,
+                minDb: widget.minDb,
+                maxDb: widget.maxDb,
+                maxSpanHz: radio.sampleRateHz,
+                onFrequencyChanged: (frequencyHz) {
+                  final step = widget.tuneStepHz;
+                  final rounded = step > 0
+                      ? (frequencyHz / step).round() * step
+                      : frequencyHz;
+                  radio.setFrequencyHz(rounded);
+                },
+                onPassbandChanged: (passbandHz) =>
+                    setState(() => _passbandHz = passbandHz),
+                onSpanChanged: (spanHz) => setState(() => _spanHz = spanHz),
               ),
             ),
           ],

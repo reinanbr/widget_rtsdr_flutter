@@ -42,6 +42,65 @@ void main() {
     expect(changed! > 91900000, isTrue);
   });
 
+  testWidgets('tapping the up-arrow above the last digit steps +1 Hz', (
+    tester,
+  ) async {
+    int? changed;
+    await tester.pumpWidget(
+      wrap(
+        FrequencyReadout(
+          frequencyHz: 91900000,
+          onChanged: (hz) => changed = hz,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_up).last);
+    await tester.pump();
+
+    expect(changed, 91900001);
+  });
+
+  testWidgets('tapping the down-arrow below the last digit steps -1 Hz', (
+    tester,
+  ) async {
+    int? changed;
+    await tester.pumpWidget(
+      wrap(
+        FrequencyReadout(
+          frequencyHz: 91900000,
+          onChanged: (hz) => changed = hz,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down).last);
+    await tester.pump();
+
+    expect(changed, 91899999);
+  });
+
+  testWidgets(
+    'tapping the up-arrow above a leading digit steps by its place value',
+    (tester) async {
+      int? changed;
+      await tester.pumpWidget(
+        wrap(
+          FrequencyReadout(
+            frequencyHz: 91900000,
+            onChanged: (hz) => changed = hz,
+          ),
+        ),
+      );
+
+      // First digit is the 1e9 (billions) place.
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_up).first);
+      await tester.pump();
+
+      expect(changed, 91900000 + 1000000000);
+    },
+  );
+
   testWidgets('clamps to minHz/maxHz', (tester) async {
     int? changed;
     await tester.pumpWidget(

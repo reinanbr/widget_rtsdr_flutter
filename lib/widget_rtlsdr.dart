@@ -9,7 +9,10 @@
 /// - Display widgets: [FrequencyReadout] (odometer-style digit tuner —
 ///   drag or scroll a digit to change just that place), [SpectrumScope]
 ///   (FFT line/fill plot, tap/drag to retune), [WaterfallView] (scrolling
-///   spectrogram), [SignalMeter] (dBFS bar with a squelch tick).
+///   spectrogram), [SpectrumTuner] (gqrx/CubicSDR-style combined scope +
+///   waterfall — one shared tune gesture, drag the passband edges to
+///   resize filter width, pinch to zoom span), [SignalMeter] (dBFS bar
+///   with a squelch tick).
 /// - Control panels, one per `core_rtlsdr` controller: [GainPanel],
 ///   [SquelchPanel], [StereoRdsPanel], [RecordingPanel], [ScanPanel],
 ///   [PresetsPanel], [StatsPanel], [UsbStatusBanner]. Each is a
@@ -55,4 +58,5 @@ export 'src/widgets/mode_selector.dart';
 export 'src/widgets/rtlsdr_panel.dart';
 export 'src/widgets/signal_meter.dart';
 export 'src/widgets/spectrum_scope.dart';
+export 'src/widgets/spectrum_tuner.dart';
 export 'src/widgets/waterfall_view.dart';

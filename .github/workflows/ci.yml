@@ -55,7 +55,91 @@ jobs:
         run: flutter test
 
   # ---------------------------------------------------------------------------
-  # Job 2 - debug APK build. The example app pulls in driver_rtlsdr's native
+  # Job 2 - integration test on an emulator.
+  #
+  # Runs on ubuntu-latest with a KVM-accelerated x86_64 emulator — the same
+  # combination core_rtlsdr's and driver_rtlsdr's own CI settled on.
+  # GitHub-hosted macos runners can't hardware-accelerate the emulator's
+  # arm64-v8a image (no nested virtualization on the M1-based fleet), and
+  # GitHub's Linux arm64 runners don't expose /dev/kvm either — x86_64 on
+  # ubuntu-latest is the only combination that's actually reliable, and
+  # driver_rtlsdr's native sources are portable C/C++ with no ARM-specific
+  # code, so they build fine for x86_64 too (opt-in only, via
+  # ORG_GRADLE_PROJECT_driverRtlsdrCiAbis below — this env var applies
+  # build-wide, so it reaches driver_rtlsdr even though it's included here
+  # only as a transitive plugin subproject; release consumers still only
+  # get arm64-v8a/armeabi-v7a).
+  #
+  # Matrix mirrors core_rtlsdr's and driver_rtlsdr's own spread of
+  # meaningful Android versions (26 - Oboe/AAudio floor, 29/33 - common
+  # baselines, 36 - latest). Validates that the whole driver_rtlsdr <-
+  # core_rtlsdr <- widget_rtlsdr <- example chain builds, links and loads
+  # on-device across that spread, and that widget_rtlsdr's widgets render
+  # against a real (dongle-less) NativeRtlSdrDriver — see
+  # example/integration_test/widget_rtlsdr_integration_test.dart. No
+  # physical RTL-SDR dongle is involved or needed.
+  # ---------------------------------------------------------------------------
+  integration:
+    name: integration (API ${{ matrix.api-level }}, x86_64)
+    needs: analyze-and-unit
+    runs-on: ubuntu-latest
+    env:
+      ORG_GRADLE_PROJECT_driverRtlsdrCiAbis: "true"
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [26, 29, 33, 36]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('example/android/**/*.gradle*') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Install Android NDK & CMake
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" > /dev/null
+
+      - name: Install example app dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Integration test on x86_64 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          # Must be a single line: android-emulator-runner runs each line of
+          # a multi-line script as its own separate `sh -c` invocation, so a
+          # `cd` on one line does not carry over to the next.
+          script: cd example && flutter test integration_test
+
+  # ---------------------------------------------------------------------------
+  # Job 3 - debug APK build. The example app pulls in driver_rtlsdr's native
   # code transitively through core_rtlsdr, so building an actual APK (unlike
   # analyze/test above) needs the NDK/CMake — this is the real confirmation
   # that widget_rtlsdr's widgets build for Android end to end, same rationale

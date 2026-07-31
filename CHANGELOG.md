@@ -1,3 +1,46 @@
+## 0.2.0
+
+- `FrequencyReadout`: each digit now has a small up/down arrow button
+  above/below it (in addition to the existing drag/scroll gesture) to step
+  that digit's place value by ±1 — easier to hit precisely on a
+  touchscreen than a drag gesture.
+- Bumped the `core_rtlsdr` dependency to `^0.2.0` for its new
+  Downloads/MediaStore recording and share API.
+- `RecordingPanel` now records into the real, shared Downloads folder by
+  default (via `RecordingController.startRecordingToDownloads`/
+  `startIqRecordingToDownloads`, falling back automatically to the previous
+  app-specific-storage default on Android below API 29) — passing
+  `buildFilePath`/`buildIqFilePath` still records to exactly that path
+  instead, unchanged. Each completed recording also gets a share button
+  (Android's native share sheet).
+
+## 0.1.0
+
+- Bumped the `core_rtlsdr` dependency from `^0.0.2` to `^0.1.0` — the tight
+  caret constraint on a `0.0.x` version could never resolve past `0.0.x` at
+  all (the same class of bug `core_rtlsdr`'s own changelog documents
+  happening to it with `driver_rtlsdr`), so this package was silently stuck
+  behind every `core_rtlsdr` release since its own `0.0.1`.
+- Added raw I/Q recording controls to `RecordingPanel`, alongside the
+  existing PCM ones (independent — both can run at once), using
+  `core_rtlsdr` 0.1.0's `RecordingController.startIqRecording`/
+  `stopIqRecording`/`isIqRecording` + `defaultIqRecordingPath`. Both PCM and
+  I/Q rows now also show live bytes-written
+  (`RadioController.recordingBytesWritten`/`iqRecordingBytesWritten`).
+- Added `SpectrumTuner`: a gqrx/CubicSDR-style combined scope + waterfall
+  driven by one shared gesture surface — tap/drag anywhere to retune, drag
+  either edge of the shaded passband band to resize the demod filter width
+  live, pinch to zoom the visible span. Replaces the separately-tuned
+  `SpectrumScope`/`WaterfallView` pair inside `RtlSdrImmersiveScreen` (both
+  widgets are still exported and usable standalone for apps that want
+  independent scope/waterfall tuning instead).
+- `RtlSdrImmersiveScreen.tuneStepHz` (previously accepted but never applied)
+  is now actually used: `SpectrumTuner`'s tune gesture rounds to the
+  nearest step before calling `RadioController.setFrequencyHz`.
+- Extracted `frequencyAtFraction`/`fractionForFrequency` (internal) so the
+  frequency↔pixel math is shared between `SpectrumScope` and `SpectrumTuner`
+  instead of duplicated.
+
 ## 0.0.1
 
 - Initial release: an immersive, gqrx/CubicSDR-inspired widget library for

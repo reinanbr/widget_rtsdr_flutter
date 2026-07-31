@@ -2,6 +2,7 @@ import 'package:core_rtlsdr/core_rtlsdr.dart';
 import 'package:flutter/material.dart';
 
 import '../painters/spectrum_painter.dart';
+import '../spectrum_geometry.dart';
 import '../theme/rtlsdr_theme.dart';
 
 /// Live FFT view (gqrx's top "Hist" plot) driven directly by a
@@ -40,11 +41,11 @@ class SpectrumScope extends StatelessWidget {
   final bool showFrequencyAxis;
   final ValueChanged<int>? onFrequencyChanged;
 
-  int _frequencyAt(double dx, double width) {
-    final fraction = (dx / width).clamp(0.0, 1.0);
-    final startHz = centerFrequencyHz - spanHz ~/ 2;
-    return startHz + (fraction * spanHz).round();
-  }
+  int _frequencyAt(double dx, double width) => frequencyAtFraction(
+    centerFrequencyHz: centerFrequencyHz,
+    spanHz: spanHz,
+    fraction: dx / width,
+  );
 
   @override
   Widget build(BuildContext context) {

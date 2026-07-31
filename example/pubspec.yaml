@@ -13,7 +13,7 @@ dependencies:
   # Hosted (not a path dependency), same as the package itself — see
   # ../pubspec.yaml — so this example builds the same way a real consumer's
   # app would.
-  core_rtlsdr: ^0.0.2
+  core_rtlsdr: ^0.2.0
 
   widget_rtlsdr:
     # The example app is bundled with the package, so it always exercises
@@ -24,6 +24,8 @@ dependencies:
   provider: ^6.1.5+1
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
